@@ -1,4 +1,6 @@
 require 'pry-byebug'
+require 'json'
+
 def game()
     word_bank = SecretWord.new
     word_bank.define_dictionary()
@@ -9,8 +11,38 @@ def game()
     puts hangman.hangman_display
     puts "Welcome to Hangman!  You will be attempting to guess the secret word within 11 turns by guessing 1 letter at a time."
     puts "When the floor appears below the hangman, you lose!"
+    puts "Do you want to load your previously saved game?"
+    answer = gets
+    answer = answer.chomp.downcase
+    if answer == 'yes' || answer == 'y'
+
+       player.from_json
+       hangman.from_json
+       data = JSON.load(File.read('json3.dump'))
+        secret_word = data['secret_word']
+        secret_word_hidden = data['secret_word_hidden']
+        puts "Data successfully loaded!  Welcome back!"
+
+
+    elsif answer == 'no' || answer == 'n'
+        puts "Okay, we will continue with the new game."
+    end
     until player.guesses == 0
-    player.display_values(secret_word_hidden, player.guesses, player.correct_letters, player.wrong_letters)
+        player.display_values(secret_word_hidden, player.guesses, player.correct_letters, player.wrong_letters)
+        puts "Do you want to save your game?"
+        answer = gets
+        answer = answer.chomp.downcase
+        if answer == 'yes' || answer == 'y'
+            player.to_json
+            hangman.to_json
+            save_secret_data(secret_word, secret_word_hidden)
+            sleep 2
+            puts "Please come back to finish your game soon!"
+            exit
+        elsif answer == 'no' || answer == 'n'
+
+        end
+
     letter = player.get_letter()
     result = player.right_letter?(letter, secret_word)
     if player.correct_letters.include?(letter) || player.wrong_letters.include?(letter)
@@ -99,6 +131,13 @@ class Player
             false
         end
     end
+    def from_json()
+        data = JSON.load(File.read('json2.dump'))
+        @letters = data['letters']
+        @guesses = data['guesses']
+        @correct_letters = data['correct_letters']
+        @wrong_letters = data['wrong_letters']
+    end
 
     def true_action(letter, secret_word, secret_word_hidden)
         puts "Congratulations!  You chose one of the correct letters!"
@@ -122,36 +161,53 @@ class Player
             end
             secret_array.join(' ')
         end
-        def false_action(letter, tracker, tracker_display)
-            puts "I'm sorry, your guess was incorrect."
-            sleep 2
-            @guesses -= 1
-            @wrong_letters.push(letter)
-            if @guesses == 10
-                tracker.push(tracker_display[0])
-            elsif @guesses == 9
-                tracker.push(tracker_display[1])
-            elsif @guesses == 8
-                tracker.push(tracker_display[2])
-            elsif @guesses == 7
-                tracker.push(tracker_display[3])
-            elsif @guesses == 6
-                tracker.push(tracker_display[4])
-            elsif @guesses == 5
-                tracker.push(tracker_display[5])
-            elsif @guesses == 4
-                tracker.push(tracker_display[6])
-            elsif @guesses == 3
-                tracker.push(tracker_display[7])
-            elsif @guesses == 2
-                tracker.push(tracker_display[8])
-            elsif @guesses == 1
-                tracker.push(tracker_display[9])
-            elsif @guesses == 0
-                tracker.push(tracker_display[10])
-            end
+    def false_action(letter, tracker, tracker_display)
+        puts "I'm sorry, your guess was incorrect."
+        sleep 2
+        @guesses -= 1
+        @wrong_letters.push(letter)
+        if @guesses == 10
+            tracker.push(tracker_display[0])
+        elsif @guesses == 9
+            tracker.push(tracker_display[1])
+        elsif @guesses == 8
+            tracker.push(tracker_display[2])
+        elsif @guesses == 7
+            tracker.push(tracker_display[3])
+        elsif @guesses == 6
+            tracker.push(tracker_display[4])
+        elsif @guesses == 5
+            tracker.push(tracker_display[5])
+        elsif @guesses == 4
+            tracker.push(tracker_display[6])
+        elsif @guesses == 3
+            tracker.push(tracker_display[7])
+        elsif @guesses == 2
+            tracker.push(tracker_display[8])
+        elsif @guesses == 1
+            tracker.push(tracker_display[9])
+        elsif @guesses == 0
+            tracker.push(tracker_display[10])
+    end
 
-        end
+    def to_json
+        File.open('json2.dump', 'w') do |file|
+        data = JSON.dump({
+            :letters => @letters,
+            :guesses => @guesses,
+            :correct_letters => @correct_letters,
+            :wrong_letters => @wrong_letters
+        })
+        file.puts data
+    end
+    puts "You've successfully saved your player data!"
+end
+
+
+
+end
+
+
 
 
 
@@ -174,6 +230,23 @@ class Hangman
     ["|_____________________________|"]
     ]
     @hangman_tracker = []
+    end
+
+    def to_json
+        File.open('json1.dump', 'w') do |file|
+        data = JSON.dump({
+            :hangman_display => @hangman_display,
+            :hangman_tracker => @hangman_tracker,
+        })
+        file.puts data
+    end
+    puts "You've successfully saved your hangman data!"
+end
+
+    def from_json()
+        data = JSON.load(File.read('json1.dump'))
+        @hangman_display = data['hangman_display']
+        @hangman_tracker = data['hangman_tracker']
     end
 
 end
@@ -206,6 +279,19 @@ class SecretWord
         new_string
     end
 end
+
+def save_secret_data(secret_word, secret_word_hidden)
+        File.open('json3.dump', 'w') do |file|
+        data = JSON.dump({
+            :secret_word => secret_word,
+            :secret_word_hidden => secret_word_hidden,
+        })
+        file.puts data
+    end
+    puts "You've successfully saved your secret word data!"
+end
+
+
 
 
 game()
