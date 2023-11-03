@@ -9,16 +9,60 @@ def game()
     puts hangman.hangman_display
     puts "Welcome to Hangman!  You will be attempting to guess the secret word within 11 turns by guessing 1 letter at a time."
     puts "When the floor appears below the hangman, you lose!"
-    puts secret_word
-
     until player.guesses == 0
     player.display_values(secret_word_hidden, player.guesses, player.correct_letters, player.wrong_letters)
     letter = player.get_letter()
     result = player.right_letter?(letter, secret_word)
-    if result == true
+    if player.correct_letters.include?(letter) || player.wrong_letters.include?(letter)
+        puts "You've already chosen that letter!  Please choose a different letter."
+        sleep 2
+    elsif result == true && !player.correct_letters.include?(letter) && !player.wrong_letters.include?(letter)
         secret_word_hidden = player.true_action(letter, secret_word, secret_word_hidden)
+        puts hangman.hangman_tracker
+        if !secret_word_hidden.include?('_')
+            puts "Congratulations!  Your guessed the secret word within 11 guesses!  You win!"
+            puts "W---(^_^)---W"
+            sleep 2
+            puts "Do you want to start a new game?"
+            loop do
+            game_choice = gets
+            game_choice = game_choice.chomp.downcase
+            if game_choice == "yes" || game_choice == "y"
+                puts "Yay!  You chose to play a new game!"
+                sleep 2
+                game()
+            elsif game_choice == "no" || game_choice == "n"
+                puts "Thank you for playing Hangman.  Have a great day!"
+                exit
+            else
+                puts "Do you want to play again?  Type yes, no, y or n."
+            end
+            end
+        end
+    elsif result == false && !player.correct_letters.include?(letter) && !player.wrong_letters.include?(letter)
+        player.false_action(letter, hangman.hangman_tracker, hangman.hangman_display)
+        puts hangman.hangman_tracker
     end
     end
+    puts "I'm sorry, you did not guess the secret word within 11 guesses.  You lose!"
+    puts "m---(v_v)---m"
+    sleep 2
+    puts "Don't give up!  Do you want to try again?"
+    loop do
+    game_choice = gets
+    game_choice = game_choice.chomp.downcase
+    if game_choice == "yes" || game_choice == "y"
+        puts "Yay!  You chose to play a new game!"
+        sleep 2
+        game()
+    elsif game_choice == "no" || game_choice == "n"
+        puts "Thank you for playing Hangman.  Have a great day!"
+        exit
+    else
+        puts "Do you want to play again?  Type yes, no, y or n."
+    end
+
+  end
 end
 
 
@@ -50,8 +94,6 @@ class Player
 
     def right_letter?(letter, secret_word) #need to include action for a repeated selection
         if secret_word.include?(letter)
-            puts "Congratulations!  You chose one of the correct letters!"
-            sleep 2
             true
         elsif !secret_word.include?(letter)
             false
@@ -59,6 +101,8 @@ class Player
     end
 
     def true_action(letter, secret_word, secret_word_hidden)
+        puts "Congratulations!  You chose one of the correct letters!"
+        sleep 2
         secret_array = secret_word_hidden.split(' ')
         i = 0
         while i < secret_word.length
@@ -76,9 +120,39 @@ class Player
                 end
 
             end
-            @guesses -= 1
             secret_array.join(' ')
         end
+        def false_action(letter, tracker, tracker_display)
+            puts "I'm sorry, your guess was incorrect."
+            sleep 2
+            @guesses -= 1
+            @wrong_letters.push(letter)
+            if @guesses == 10
+                tracker.push(tracker_display[0])
+            elsif @guesses == 9
+                tracker.push(tracker_display[1])
+            elsif @guesses == 8
+                tracker.push(tracker_display[2])
+            elsif @guesses == 7
+                tracker.push(tracker_display[3])
+            elsif @guesses == 6
+                tracker.push(tracker_display[4])
+            elsif @guesses == 5
+                tracker.push(tracker_display[5])
+            elsif @guesses == 4
+                tracker.push(tracker_display[6])
+            elsif @guesses == 3
+                tracker.push(tracker_display[7])
+            elsif @guesses == 2
+                tracker.push(tracker_display[8])
+            elsif @guesses == 1
+                tracker.push(tracker_display[9])
+            elsif @guesses == 0
+                tracker.push(tracker_display[10])
+            end
+
+        end
+
 
 
 end
@@ -99,8 +173,9 @@ class Hangman
     ["|          _/     \\_          |"],
     ["|_____________________________|"]
     ]
-    end
     @hangman_tracker = []
+    end
+
 end
 
 class SecretWord
